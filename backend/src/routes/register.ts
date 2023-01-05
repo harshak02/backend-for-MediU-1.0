@@ -60,33 +60,37 @@ router.post('/', async (req: Request, res: any) => {
 		const dbHelper = new mongodbHelper();
 		await dbHelper.isconnect(client).then((resultInside: any) => {
 			console.log('client is connected', resultInside);
-		});
-		const findResult = dbHelper.findDocuments(client,"Semwell","userAuth",{email:"john@gmail.com"});
-		if(findResult.status){
-			console.log("Aldready Registered Please Login");
-		}
-		else{
-			const newUser = {
-				userName: req.body.userName,
-				email: req.body.email,
-				phone:	req.body.phone,
-				age: req.body.age,
-				gender: req.body.gender,
-				password: req.body.password,
-			};
+			const findResult = dbHelper.findDocuments(client,"Semwell","userAuth",{email: data.email});
+			if(findResult.status){
+				console.log("Aldready Registered Please Login");
+			}
+			else{
+				const newUser = {
+					userName: req.body.userName,
+					email: req.body.email,
+					phone:	req.body.phone,
+					age: req.body.age,
+					gender: req.body.gender,
+					password: req.body.password,
+				};
+			
+				bcrypt.genSalt (10, (err:any,salt:any) => 
+					bcrypt.hash(newUser.password , salt , (err:any,hash:any) => {
+						if(err){
+							throw err;
+						}
+						else{
+							newUser.password = hash;
+							dbHelper.insertDocuments(client,"Semwell","userAuth",[newUser]);
+							console.log("added New User now he can log in");
+						}
+				}));
+			}
 		
-			bcrypt.genSalt (10, (err:any,salt:any) => 
-				bcrypt.hash(newUser.password , salt , (err:any,hash:any) => {
-					if(err){
-						throw err;
-					}
-					else{
-						newUser.password = hash;
-						dbHelper.insertDocuments(client,"Semwell","userAuth",[newUser]);
-						console.log("added New User now he can log in");
-					}
-			}));
-		}
+		}).catch((err:any)=>{
+			console.log("We are facing issues try again! "+err);
+		});
+		
 	}
 	else{
 		res.send("Error Occured Pls Enter the details Correctly");
